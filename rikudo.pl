@@ -34,37 +34,58 @@ createNeigh(S,X,O):-defSize(S,A,B,C,D),check1(X,B,[],O1),check2(X,B,O1,O2),check
 isMember(X,[X|T]).
 isMember(X,[Y|T]):-isMember(X,T).
 
-selectCurrent((A,B),[C|R],R,(A,B,C)).
-selectCurrent((A,B),[Y|Zs],[Y|Ys],AN):-selectCurrent((A,B),Zs,Ys,AN).
-
 selectCurrentNeigh([X|T],X).
 selectCurrentNeigh([X|T],Y):-selectCurrentNeigh(T,Y).
 
-find((A,B,C),[(A,B,C)|T]).                /*  Finds in Prefilled list         */
+find((A,B,C),[(A,B,C)|T]).                /*  Finds C in Prefilled list         */
 find((A,B,C),[(X,Y,Z)|T]):-find((A,B,C),T).
 
 isNeigh((A,B),(X,Y)):-SA is (A-X),SB is (B-Y),abs(SA,Sa),abs(SB,Sb),Sum is Sa+Sb,Sum=:=2.
 
-isLinked((X,Y),[(X,Y,C,D)|T],(C,D)).           /* Finds links  */
+isLinked((X,Y),[],(X,Y)).
+isLinked((X,Y),[(X,Y,C,D)|T],(C,D)).
+isLinked((X,Y),[(A,B,X,Y)|T],(A,B)).           /* Finds links  */
 isLinked((X,Y),[(A,B,C,D)|T],R):-isLinked((X,Y),T,R).
 
-/*
-findPath(Size,(A,B),Avail,Links,C,Avail):-Ex is Size-1,C=:=Ex.
-findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),findPath(Size,(Xval,Yval),Avail,NextC,Res).
-findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,not find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),selectCurrentNeigh(Neigh,(X,Y)),
-								not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],NextC,Res).
-*/
-findPath(Size,(A,B),Avail,Links,C,Avail):-Ex is Size-1,C=:=Ex.
-findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),findPath(Size,(Xval,Yval),Avail,NextC,Res).
-findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,not find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),selectCurrentNeigh(Neigh,(X,Y)),
+findPath(Size,(A,B),Avail,C,Avail):-Ex is Size-1,C>=Ex,!.
+findPath(Size,(A,B),Avail,C,Res):-NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),findPath(Size,(Xval,Yval),Avail,NextC,Res).
+findPath(Size,(A,B),Avail,C,Res):-NextC is C+1,not find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),selectCurrentNeigh(Neigh,(X,Y)),
 								not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],NextC,Res).
 
+/*
+findPath(Size,(A,B),Avail,Links,C,Avail):-Ex is Size-1,C>=Ex,!.
+findPath(Size,(A,B),Avail,Links,C,Res):-write(C),nl,NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),
+										isLinked((A,B),Links,(A,B)),
+										findPath(Size,(Xval,Yval),Avail,Links,NextC,Res).
+findPath(Size,(A,B),Avail,Links,C,Res):-write(C),nl,NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),
+										isLinked((A,B),Links,(Xval,Yval)),
+										findPath(Size,(Xval,Yval),Avail,Links,NextC,Res).
+/*findPath(Size,(A,B),Avail,Links,C,Res):-write(C),nl,NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),
+										isLinked((A,B),Links,(PrX,PrY)),PrC is C-1,find((PrX,PrY,PrC)),
+										findPath(Size,(Xval,Yval),Avail,Links,NextC,Res).
+findPath(Size,(A,B),Avail,Links,C,Res):-write(C),nl,NextC is C+1,not find((Xval,Yval,NextC),Avail),isLinked((A,B),Links,(X,Y)),
+										not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res).
+findPath(Size,(A,B),Avail,Links,C,Res):-write(C),nl,NextC is C+1,not find((Xval,Yval,NextC),Avail),
+										createNeigh(Size,(A,B,C),Neigh),selectCurrentNeigh(Neigh,(X,Y)),
+										not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res).
+
 rikudo(Size,Pre,Links,Res):-findMin(Pre,(95,95,95),(A,B,C)),findPath(Size,(A,B),Pre,Links,C,Res).
+*/
+
+findVal((X,Y),[(X,Y,C)|T],C).
+findVal((X,Y),[(A,B,C)|T],Val):-findVal((X,Y),T,Val).
+
+checkLinks([],Res).
+checkLinks([(A,B,C,D)|T],Res):-findVal((A,B),Res,V1),findVal((C,D),Res,V2),V3 is (V1-V2),abs(V3,V),V=:=1,checkLinks(T,Res).   
+
+rikudo(Size,Pre,Links,Res):-findMin(Pre,(95,95,95),(A,B,C)),findPath(Size,(A,B),Pre,C,Res),checkLinks(Links,Res).
 
 /*
 19
-[(-2,2,16),(0,2,15),(-1,1,13),(-2,0,12),(-1,-1,11),(1,-1,5),(-2,-2,9),(2,2,1)]
+[(-2,2,12),(1,1,15),(-2,0,8),(4,0,1),(1,-1,18),(-2,-2,6),(2,-2,3)]
+[(-1,1,-3,1),(0,2,2,2)]
 
-37
-[(3,3,36),(6,0,1),(5,1,5),(-4,0,14),(-3,1,11),(-4,2,32),(-1,-1,16),(-4,-2,28),(2,-2,20),(3,-3,24)]
+37  3rd in game
+[(1,3,4),(2,2,28),(-4,2,7),(-3,1,9),(1,1,25),(5,1,1),(-6,0,15),(-4,0,13),(6,0,31),(-1,-1,11),(3,-1,36),(0,-2,22),(-2,-2,19)]
+[(-3,-3,-4,-2),(4,0,3,1),(-1,1,0,2)]
 */

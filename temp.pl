@@ -38,3 +38,4 @@ checkCons(S,[(A,B,C)|T],L):-C=\=1,C=\=S,check1((A,B,C),L,0,C1),check2((A,B,C),L,
 						,check5((A,B,C),L,C4,C5),check6((A,B,C),L,C5,C6),C6=:=2,checkCons(S,T,L).
 checkCons(S,[(A,B,C)|T],L):-check1((A,B,C),L,0,C1),check2((A,B,C),L,C1,C2),check3((A,B,C),L,C2,C3),check4((A,B,C),L,C3,C4)
 						,check5((A,B,C),L,C4,C5),check6((A,B,C),L,C5,C6),C6=:=1,checkCons(S,T,L).
+
