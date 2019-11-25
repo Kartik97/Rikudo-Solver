@@ -10,26 +10,22 @@ findMin([(A,B,C)|T],(F,D,M),Min):-C>M,findMin(T,(F,D,M),Min).
 abs(X,X):-X>=0,!.
 abs(X,X1):-X<0,X1 is X*(-1).
 
-/*
-slides------bottom left
-*/
-
 check1((A,B,C),H,In,[(A1,B1)|In]):-A1 is A-2,B1 is B,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
 check1((A,B,C),H,In,In).
 
 check2((A,B,C),H,In,[(A1,B1)|In]):-A1 is A-1,B1 is B+1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
 check2((A,B,C),H,In,In).
 
-check3((A,B,C),H,In,[(A1,B1)|In]):-A1 is A+1,B1 is B+1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
+check3((A,B,C),H,In,[(A1,B1)|In]):-A1 is A-1,B1 is B-1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
 check3((A,B,C),H,In,In).
 
-check4((A,B,C),H,In,[(A1,B1)|In]):-A1 is A-1,B1 is B-1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
+check4((A,B,C),H,In,[(A1,B1)|In]):-A1 is A+1,B1 is B+1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
 check4((A,B,C),H,In,In).
 
-check5((A,B,C),H,In,[(A1,B1)|In]):-A1 is A+2,B1 is B,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
+check5((A,B,C),H,In,[(A1,B1)|In]):-A1 is A+1,B1 is B-1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
 check5((A,B,C),H,In,In).
 
-check6((A,B,C),H,In,[(A1,B1)|In]):-A1 is A+1,B1 is B-1,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
+check6((A,B,C),H,In,[(A1,B1)|In]):-A1 is A+2,B1 is B,abs(B1,AbB),abs(A1,AbA),AbB=<H,Ch is AbA+AbB,Ch=<(2*H),Ch=\=0,!.
 check6((A,B,C),H,In,In).
 
 createNeigh(S,X,O):-defSize(S,A,B,C,D),check1(X,B,[],O1),check2(X,B,O1,O2),check3(X,B,O2,O3),check4(X,B,O3,O4),
@@ -144,17 +140,32 @@ findPathBack(Size,(A,B),Avail,Links,C,Res,Nlinks):-NextC is C-1,createNeigh(Size
 											)
 										).
 
-rikudo(37,[],Links,Res):-findPath(37,(3,-3),[(-3,-3,1)],Links,1,Res).
-rikudo(61,[],Links,Res):-findPath(61,(4,-4),[(-4,-4,1)],Links,1,Res).
-rikudo(91,[],Links,Res):-findPath(91,(5,-5),[(-5,-5,1)],Links,1,Res).
+findLinkFree([(A,B,C)|T],Links,(A,B,C)):-countLink((A,B),Links,0,Out),Out=:=0,!.
+findLinkFree([(A,B,C)|T],Links,R):-findLinkFree(T,Links,R).
+
+rikudo(37,[],Links,Res):-findPath(37,(3,-3),[(-3,-3,1)],Links,1,Res1,Nlinks),Res=[(0,0,-10)|Res1],!.
+rikudo(61,[],Links,Res):-findPath(61,(4,-4),[(-4,-4,1)],Links,1,Res1,Nlinks),Res=[(0,0,-10)|Res1],!.
+rikudo(91,[],Links,Res):-findPath(91,(-5,5),[(-5,-5,1)],Links,1,Res1,Nlinks),Res=[(0,0,-10)|Res1],!.
 rikudo(Size,Pre,Links,Res):-findMin(Pre,(95,95,95),(A,B,1)) ->
 							(
 								findPath(Size,(A,B),Pre,Links,1,Res1,Nlinks),
 								Res=[(0,0,-10)|Res1],!
 							);
-							(
-								findMin(Pre,(95,95,95),(A,B,C)),
-								findPath(Size,(A,B),Pre,Links,C,Res1,Nlinks),
-								findPathBack(Size,(A,B),Res1,Nlinks,C,Res2,Nlinks2),
-								Res=[(0,0,-10)|Res2],!
+							(	
+								findLinkFree(Pre,Links,(A1,B1,C1)) ->
+								(
+									findPath(Size,(A1,B1),Pre,Links,C1,Res1,Nlinks),
+									findPathBack(Size,(A1,B1),Res1,Nlinks,C1,Res2,Nlinks2),
+									Res=[(0,0,-10)|Res2],!
+								);
+								(
+									findMin(Pre,(95,95,95),(A,B,C)),
+									(
+										(findPath(Size,(A,B),Pre,Links,C,Res1,Nlinks),
+										findPathBack(Size,(A,B),Res1,Nlinks,C,Res2,Nlinks2));
+										(findPathBack(Size,(A,B),Pre,Links,C,Res1,Nlinks),
+										findPath(Size,(A,B),Res1,Nlinks,C,Res2,Nlinks2))
+									),
+									Res=[(0,0,-10)|Res2],!
+								)
 							).
