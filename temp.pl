@@ -1,41 +1,38 @@
-putNumbers(AN):- L=[(1,2),(3,4),(5,6),(7,8)],D=[1,2,3,4],assign_digits(L,D,AN).
+--Without if version--
 
-select((A,B),[C|R],R,(A,B,C)).
-select((A,B),[Y|Zs],[Y|Ys],AN):-select((A,B),Zs,Ys,AN).
+findPath(Size,(A,B),Avail,C,Avail):-Ex is Size-1,C>=Ex,!.
+findPath(Size,(A,B),Avail,C,Res):-NextC is C+1,find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),
+								isNeigh((Xval,Yval),Neigh),findPath(Size,(Xval,Yval),Avail,NextC,Res).
+findPath(Size,(A,B),Avail,C,Res):-NextC is C+1,not find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),
+								selectCurrentNeigh(Neigh,(X,Y)),
+								not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],NextC,Res).
 
-assign_digits([],List,[]).
-assign_digits([D|Ds],List,[Ele1|List2]):-select(D,List,NewList,Ele1),assign_digits(Ds,NewList,List2).
+findPathBack(Size,(A,B),Avail,1,Avail).
+findPathBack(Size,(A,B),Avail,C,Res):-NextC is C-1,find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),
+									isNeigh((Xval,Yval),Neigh),findPathBack(Size,(Xval,Yval),Avail,NextC,Res).
+findPathBack(Size,(A,B),Avail,C,Res):-NextC is C-1,not find((Xval,Yval,NextC),Avail),createNeigh(Size,(A,B,C),Neigh),
+									selectCurrentNeigh(Neigh,(X,Y)),
+									not isMember((X,Y,_),Avail),findPathBack(Size,(X,Y),[(X,Y,NextC)|Avail],NextC,Res).
 
-isMember(X,[X|T]).
-isMember(X,[Y|T]):-isMember(X,T).
 
-check1((A,B,C),L,X,X1):-X1 is X+1,A1 is A-2,B1 is B,C1 is C+1,isMember((A1,B1,C1),L).
-check1((A,B,C),L,X,X1):-X1 is X+1,A1 is A-2,B1 is B,C1 is C-1,isMember((A1,B1,C1),L).
-check1((A,B,C),L,X,X1):-X1 is X.
+---Combined Links version---
 
-check2((A,B,C),L,X,X1):-X1 is X+1,A1 is A+2,B1 is B,C1 is C+1,isMember((A1,B1,C1),L).
-check2((A,B,C),L,X,X1):-X1 is X+1,A1 is A+2,B1 is B,C1 is C-1,isMember((A1,B1,C1),L).
-check2((A,B,C),L,X,X1):-X1 is X.
+findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),
+										isLinked((A,B),Links,(A,B)),
+										findPath(Size,(Xval,Yval),Avail,Links,NextC,Res).
+findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,find((Xval,Yval,NextC),Avail),isNeigh((A,B),(Xval,Yval)),
+										isLinked((A,B),Links,(Xval,Yval)),
+										findPath(Size,(Xval,Yval),Avail,Links,NextC,Res).
+findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,not find((Xval,Yval,NextC),Avail),isLinked((A,B),Links,(X,Y)),
+										not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res).
+findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,not find((Xval,Yval,NextC),Avail),
+										createNeigh(Size,(A,B,C),Neigh),selectCurrentNeigh(Neigh,(X,Y)),
+										not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res).
 
-check3((A,B,C),L,X,X1):-X1 is X+1,A1 is A-1,B1 is B+1,C1 is C+1,isMember((A1,B1,C1),L).
-check3((A,B,C),L,X,X1):-X1 is X+1,A1 is A-1,B1 is B+1,C1 is C-1,isMember((A1,B1,C1),L).
-check3((A,B,C),L,X,X1):-X1 is X.
 
-check4((A,B,C),L,X,X1):-X1 is X+1,A1 is A+1,B1 is B+1,C1 is C+1,isMember((A1,B1,C1),L).
-check4((A,B,C),L,X,X1):-X1 is X+1,A1 is A+1,B1 is B+1,C1 is C-1,isMember((A1,B1,C1),L).
-check4((A,B,C),L,X,X1):-X1 is X.
+----------------------------------
 
-check5((A,B,C),L,X,X1):-X1 is X+1,A1 is A-1,B1 is B-1,C1 is C+1,isMember((A1,B1,C1),L).
-check5((A,B,C),L,X,X1):-X1 is X+1,A1 is A-1,B1 is B-1,C1 is C-1,isMember((A1,B1,C1),L).
-check5((A,B,C),L,X,X1):-X1 is X.
-
-check6((A,B,C),L,X,X1):-X1 is X+1,A1 is A+1,B1 is B-1,C1 is C+1,isMember((A1,B1,C1),L).
-check6((A,B,C),L,X,X1):-X1 is X+1,A1 is A+1,B1 is B-1,C1 is C-1,isMember((A1,B1,C1),L).
-check6((A,B,C),L,X,X1):-X1 is X.
-
-checkCons(S,[],L).
-checkCons(S,[(A,B,C)|T],L):-C=\=1,C=\=S,check1((A,B,C),L,0,C1),check2((A,B,C),L,C1,C2),check3((A,B,C),L,C2,C3),check4((A,B,C),L,C3,C4)
-						,check5((A,B,C),L,C4,C5),check6((A,B,C),L,C5,C6),C6=:=2,checkCons(S,T,L).
-checkCons(S,[(A,B,C)|T],L):-check1((A,B,C),L,0,C1),check2((A,B,C),L,C1,C2),check3((A,B,C),L,C2,C3),check4((A,B,C),L,C3,C4)
-						,check5((A,B,C),L,C4,C5),check6((A,B,C),L,C5,C6),C6=:=1,checkCons(S,T,L).
-
+													selectLink((A,B),Links,(Xl,Yl)),
+													Xl=:=Xval,Yl=:=Yval,isNeigh((Xval,Yval),Neigh),
+													removeLink((A,B,Xval,Yval),Links,Rlinks),
+													findPath(Size,(Xval,Yval),Avail,Rlinks,NextC,Res)
