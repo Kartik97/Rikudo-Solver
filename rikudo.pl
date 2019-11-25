@@ -51,23 +51,6 @@ isLinked((X,Y),[(X,Y,C,D)|T],(C,D)).
 isLinked((X,Y),[(A,B,X,Y)|T],(A,B)).           /* Finds links  */
 isLinked((X,Y),[(A,B,C,D)|T],R):-isLinked((X,Y),T,R).
 
-/*
-findPath(Size,(A,B),Avail,C,Avail):-Ex is Size-1,C>=Ex,!.
-findPath(Size,(A,B),Avail,C,Res):-NextC is C+1,createNeigh(Size,(A,B,C),Neigh),
-								(find((Xval,Yval,NextC),Avail) ->
-								(isNeigh((Xval,Yval),Neigh),findPath(Size,(Xval,Yval),Avail,NextC,Res));
-								selectCurrentNeigh(Neigh,(X,Y)),
-								not isMember((X,Y,_),Avail),findPath(Size,(X,Y),[(X,Y,NextC)|Avail],NextC,Res)
-								).
-
-findPathBack(Size,(A,B),Avail,1,Avail).
-findPathBack(Size,(A,B),Avail,C,Res):-NextC is C+1,createNeigh(Size,(A,B,C),Neigh),
-								(find((Xval,Yval,NextC),Avail) ->
-								(isNeigh((Xval,Yval),Neigh),findPathBack(Size,(Xval,Yval),Avail,NextC,Res));
-								selectCurrentNeigh(Neigh,(X,Y)),
-								not isMember((X,Y,_),Avail),findPathBack(Size,(X,Y),[(X,Y,NextC)|Avail],NextC,Res)
-								). 
-*/
 removeLink(X,[],[]).
 removeLink(X,[X|T],T).
 removeLink(X,[Y|T],[Y|R]):-removeLink(X,T,R).
@@ -81,8 +64,8 @@ countLink((A,B),[(A,B,C,D)|T],Cin,Cout):-TempC is Cin+1,!,countLink((A,B),T,Temp
 countLink((A,B),[(C,D,A,B)|T],Cin,Cout):-TempC is Cin+1,!,countLink((A,B),T,TempC,Cout).
 countLink((A,B),[_|T],Cin,Cout):-countLink((A,B),T,Cin,Cout).
 
-findPath(Size,(A,B),Avail,Links,C,Avail):-Ex is Size-1,C>=Ex,!.
-findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,createNeigh(Size,(A,B,C),Neigh),
+findPath(Size,(A,B),Avail,Links,C,Avail,Links):-Ex is Size-1,C>=Ex,!.
+findPath(Size,(A,B),Avail,Links,C,Res,Nlinks):-NextC is C+1,createNeigh(Size,(A,B,C),Neigh),
 										(find((Xval,Yval,NextC),Avail) ->
 											(
 												isLinked((A,B),Links,(Xl,Yl)) ->
@@ -91,17 +74,17 @@ findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,createNeigh(Size,(A,B,C),Ne
 													(
 														selectLink((A,B),Links,(Xval,Yval),X),
 														removeLink(X,Links,Rlinks),
-														findPath(Size,(Xval,Yval),Avail,Rlinks,NextC,Res)
+														findPath(Size,(Xval,Yval),Avail,Rlinks,NextC,Res,Nlinks)
 													);
 													(
 														countLink((A,B),Links,0,1),C=\=1,
 														isNeigh((Xval,Yval),Neigh),
-														findPath(Size,(Xval,Yval),Avail,Links,NextC,Res)	
+														findPath(Size,(Xval,Yval),Avail,Links,NextC,Res,Nlinks)	
 													)
 												);
 												(
 													isNeigh((Xval,Yval),Neigh),
-													findPath(Size,(Xval,Yval),Avail,Links,NextC,Res)
+													findPath(Size,(Xval,Yval),Avail,Links,NextC,Res,Nlinks)
 												)
 											);
 											(
@@ -111,44 +94,67 @@ findPath(Size,(A,B),Avail,Links,C,Res):-NextC is C+1,createNeigh(Size,(A,B,C),Ne
 													countLink((A,B),Links,0,Count),Count=:=1,
 													selectLink((A,B),Links,(Xl,Yl),X),
 													removeLink(X,Links,Rlinks),
-													findPath(Size,(Xl,Yl),[(Xl,Yl,NextC)|Avail],Rlinks,NextC,Res)
+													findPath(Size,(Xl,Yl),[(Xl,Yl,NextC)|Avail],Rlinks,NextC,Res,Nlinks)
 												);
 												(
 													selectCurrentNeigh(Neigh,(X,Y)),
 													not isMember((X,Y,_),Avail),
-													findPath(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res)
+													findPath(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res,Nlinks)
 												)
 											)
 										).
 
-rikudo(Size,Pre,Links,Res):-findMin(Pre,(95,95,95),(A,B,C)),findPath(Size,(A,B),Pre,Links,C,Res).
+findPathBack(Size,(A,B),Avail,Links,1,Avail,Links).
+findPathBack(Size,(A,B),Avail,Links,C,Res,Nlinks):-NextC is C-1,createNeigh(Size,(A,B,C),Neigh),
+										(find((Xval,Yval,NextC),Avail) ->
+											(
+												isLinked((A,B),Links,(Xl,Yl)) ->
+												(
+													isLinked((A,B),Links,(Xval,Yval))->
+													(
+														selectLink((A,B),Links,(Xval,Yval),X),
+														removeLink(X,Links,Rlinks),
+														findPathBack(Size,(Xval,Yval),Avail,Rlinks,NextC,Res,Nlinks)
+													);
+													(
+														countLink((A,B),Links,0,1),C=\=1,
+														isNeigh((Xval,Yval),Neigh),
+														findPathBack(Size,(Xval,Yval),Avail,Links,NextC,Res,Nlinks)	
+													)
+												);
+												(
+													isNeigh((Xval,Yval),Neigh),
+													findPathBack(Size,(Xval,Yval),Avail,Links,NextC,Res,Nlinks)
+												)
+											);
+											(
+												isLinked((A,B),Links,(Xl,Yl)) ->
+												(
+													not isMember((Xl,Yl,_),Avail),
+													countLink((A,B),Links,0,Count),Count=:=1,
+													selectLink((A,B),Links,(Xl,Yl),X),
+													removeLink(X,Links,Rlinks),
+													findPathBack(Size,(Xl,Yl),[(Xl,Yl,NextC)|Avail],Rlinks,NextC,Res,Nlinks)
+												);
+												(
+													selectCurrentNeigh(Neigh,(X,Y)),
+													not isMember((X,Y,_),Avail),
+													findPathBack(Size,(X,Y),[(X,Y,NextC)|Avail],Links,NextC,Res,Nlinks)
+												)
+											)
+										).
 
-/*
-findVal((X,Y),[(X,Y,C)|T],C).
-findVal((X,Y),[(A,B,C)|T],Val):-findVal((X,Y),T,Val).
-
-checkLinks([],Res).
-checkLinks([(A,B,C,D)|T],Res):-findVal((A,B),Res,V1),findVal((C,D),Res,V2),V3 is (V1-V2),abs(V3,V),V=:=1,checkLinks(T,Res).   
-
-rikudo(37,[],Links,Res):-findPath(37,(3,-3),[(-3,-3,1)],1,Res),checkLinks(Links,Res).
-rikudo(61,[],Links,Res):-findPath(61,(4,-4),[(-4,-4,1)],1,Res),checkLinks(Links,Res).
-rikudo(91,[],Links,Res):-findPath(91,(5,-5),[(-5,-5,1)],1,Res),checkLinks(Links,Res).
-rikudo(Size,Pre,Links,Res):-(findMin(Pre,(95,95,95),(A,B,1)),findPath(Size,(A,B),Pre,1,Res),checkLinks(Links,Res));
-							(findMin(Pre,(95,95,95),(A,B,C)),findPath(Size,(A,B),Pre,C,Res1),
-							findPathBack(Size,(A,B),Res1,C,Res),
-							checkLinks(Links,Res)).
-*/
-/*
-[(2,4,59),(-1,3,56),(1,3,60),(-6,2,1),(4,2,42),(-1,1,20),(2,0,26),(6,0,38),(-5,-1,6),(-2,-2,17),(4,-2,34),(-5,-3,9)]
-[(3,1,4,0),(5,-1,3,-1),(1,-1,2,-2),(1,-3,0,-4),(3,-3,4,-4)]
-*/
-
-/*
-[(-2,4,13),(1,3,10),(-4,2,19),(4,2,5),(1,1,1),(-6,0,53),(4,0,26),(6,0,31),(0,-2,60),(-6,-2,48),(-4,-4,45),(4,-4,40)]
-[(-2,-2,-1,-3),(-2,-2,-3,-1),(5,-1,7,-1),(-1,1,-2,2),(-5,1,-6,2)]
-*/
-
-/*
-[(-3,3,9),(3,3,36),(-2,2,11),(1,1,5),(5,1,33),(2,0,24),(6,0,31),(-4,0,14),(3,-1,25),(-3,-1,1),(-2,-2,19),(3,-3,28)]
-[(-1,1,0,2),(-1,-1,1,-1),(-1,-1,0,-2),(0,-2,-1,-3),(-3,-3,-4,-2)]
-*/
+rikudo(37,[],Links,Res):-findPath(37,(3,-3),[(-3,-3,1)],Links,1,Res).
+rikudo(61,[],Links,Res):-findPath(61,(4,-4),[(-4,-4,1)],Links,1,Res).
+rikudo(91,[],Links,Res):-findPath(91,(5,-5),[(-5,-5,1)],Links,1,Res).
+rikudo(Size,Pre,Links,Res):-findMin(Pre,(95,95,95),(A,B,1)) ->
+							(
+								findPath(Size,(A,B),Pre,Links,1,Res1,Nlinks),
+								Res=[(0,0,-10)|Res1],!
+							);
+							(
+								findMin(Pre,(95,95,95),(A,B,C)),
+								findPath(Size,(A,B),Pre,Links,C,Res1,Nlinks),
+								findPathBack(Size,(A,B),Res1,Nlinks,C,Res2,Nlinks2),
+								Res=[(0,0,-10)|Res2],!
+							).
